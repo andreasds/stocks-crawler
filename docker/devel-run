@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$#" -ge 1 ]
+then
+  docker run \
+    -d \
+    -it \
+    -v $1:/home/stocks/crawler \
+    --restart unless-stopped \
+    --name devel-stocks-crawler \
+    devel-stocks-crawler:1.0
+else
+  echo "ERROR: no argument detected"
+  echo "./devel-run <project_folder_path>"
+fi

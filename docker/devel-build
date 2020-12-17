@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker build -t devel-stocks-crawler:1.0 -f devel.Dockerfile .
