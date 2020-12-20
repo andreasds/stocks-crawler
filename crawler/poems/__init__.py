@@ -18,9 +18,9 @@ class Poems(metaclass=Singleton):
     # read user config
     userConfig = config.readUserConfig(USER_CONFIG)
     self.user = PoemsUser(
-        userConfig['user'],
-        userConfig['password'],
-        userConfig['pin']
+        userConfig['poemsUser'],
+        userConfig['poemsPassword'],
+        userConfig['poemsPin']
     )
 
     # create session
