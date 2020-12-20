@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker build -t devel-mysql:1.0 -f devel-mysql.Dockerfile .
