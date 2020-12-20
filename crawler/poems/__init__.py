@@ -55,3 +55,7 @@ class Poems(metaclass=Singleton):
 
     if response.status_code != HTTPStatus.OK:
       raise RuntimeError('Response status ' + str(response.status_code))
+
+if __name__ == '__main__':
+  Poems().init()
+  Poems().login()

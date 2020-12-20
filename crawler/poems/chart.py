@@ -77,3 +77,7 @@ class PoemsChart(object):
     for data in outputData:
       for k, v in data.items():
         print(k, v)
+
+if __name__ == '__main__':
+  PoemsChart.history('BBRI', '1D', 30)
+  PoemsChart.marks('BBRI', '1D', 30)
