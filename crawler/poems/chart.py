@@ -11,12 +11,9 @@ MARKS_API = '/api/marks'
 class PoemsChart(object):
 
   @staticmethod
-  def history(symbol, resolution, years):
-    print('History', symbol, resolution, years)
-
-    now = datetime.now()
-    start = datetime(now.year - years - 1, now.month, now.day)
-    print(int(datetime.timestamp(datetime.now())))
+  def history(symbol, resolution, year, month, day, hour=0, minute=0, second=0):
+    now = int(datetime.timestamp(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)))
+    start = int(datetime.timestamp(datetime(year, month, day, hour, minute, second, 0)))
 
     # send history request
     response = requests.get(
@@ -24,8 +21,8 @@ class PoemsChart(object):
         params = {
             'symbol': symbol,
             'resolution': resolution,
-            'from': int(datetime.timestamp(start)),
-            'to': int(datetime.timestamp(now))
+            'from': start,
+            'to': now
         }
     )
     historyData = response.json()
@@ -40,27 +37,25 @@ class PoemsChart(object):
             'volume': historyData['v'][i]
         }
         for i, t in enumerate(historyData['t'])
+        if t != now # remove today data
     ]
 
-    for data in outputData:
-      print(data)
+#    for data in outputData:
+#      print(data)
 
   @staticmethod
-  def marks(symbol, resolution, years):
-    print('Marks', symbol, resolution, years)
+  def marks(symbol, resolution, year, month, day, hour=0, minute=0, second=0):
+    now = int(datetime.timestamp(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)))
+    start = int(datetime.timestamp(datetime(year, month, day, hour, minute, second, 0)))
 
-    now = datetime.now()
-    start = datetime(now.year - years - 1, now.month, now.day)
-    print(int(datetime.timestamp(datetime.now())))
-
-    # send history request
+    # send marks request
     response = requests.get(
         url = CHART_URL + MARKS_API,
         params = {
             'symbol': symbol,
             'resolution': resolution,
-            'from': int(datetime.timestamp(start)),
-            'to': int(datetime.timestamp(now))
+            'from': start,
+            'to': now
         }
     )
     markData = response.json()
@@ -74,10 +69,10 @@ class PoemsChart(object):
         for i, t in enumerate(markData['time'])
     ]
 
-    for data in outputData:
-      for k, v in data.items():
-        print(k, v)
+#    for data in outputData:
+#      for k, v in data.items():
+#        print(k, v)
 
 if __name__ == '__main__':
-  PoemsChart.history('BBRI', '1D', 30)
-  PoemsChart.marks('BBRI', '1D', 30)
+  PoemsChart.history('BBRI', '1D', 1990, 1, 1)
+  PoemsChart.marks('BBRI', '1D', 1990, 1, 1)
