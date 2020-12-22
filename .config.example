@@ -1,3 +1,10 @@
+# user
 poemsUser=user
 poemsPassword=password
 poemsPin=pin
+
+# db
+dbHost=localhost
+dbPort=3306
+dbUser=root
+dbPassword=root
