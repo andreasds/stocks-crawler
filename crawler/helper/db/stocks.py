@@ -3,8 +3,6 @@ import crawler.helper.db.industries as industries
 import crawler.helper.db.markets as markets
 import mysql.connector.errorcode as errorcode
 
-from crawler.collector import Collector
-
 STOCKS = 'stocks'
 STOCK_ID = 'id'
 STOCK_MARKET = 'market_id'
@@ -72,6 +70,8 @@ class Stocks(object):
     db.commit()
 
 if __name__ == '__main__':
+  from crawler.collector import Collector
+
   industry = 'Plantation'
   stock = 'AALI'
   Stocks.insertStock(Collector().db, idx.IDX, industry, stock)

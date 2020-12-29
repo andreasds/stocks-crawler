@@ -1,8 +1,6 @@
 import crawler.helper.idx as idx
 import mysql.connector.errorcode as errorcode
 
-from crawler.collector import Collector
-
 MARKETS = 'markets'
 MARKET_ID = 'id'
 MARKET_NAME = 'market_name'
@@ -59,6 +57,8 @@ class Markets(object):
     db.commit()
 
 if __name__ == '__main__':
+  from crawler.collector import Collector
+
   Markets.insertMarket(Collector().db, idx.IDX, idx.IDX_DESC)
   print(idx.IDX, 'id =', Markets.getMarketId(Collector().db, idx.IDX))
   Collector().stop()

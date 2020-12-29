@@ -1,8 +1,6 @@
 import crawler.helper.db.sectors as sectors
 import mysql.connector.errorcode as errorcode
 
-from crawler.collector import Collector
-
 INDUSTRIES = 'industries'
 INDUSTRY_ID = 'id'
 INDUSTRY_PARENT = 'parent'
@@ -62,6 +60,8 @@ class Industries(object):
     db.commit()
 
 if __name__ == '__main__':
+  from crawler.collector import Collector
+
   sector = 'Agriculture'
   industry = 'Plantation'
   Industries.insertIndustry(Collector().db, sector, industry)

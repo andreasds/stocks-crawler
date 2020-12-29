@@ -1,6 +1,5 @@
 import requests
 
-from crawler.collector import Collector
 from crawler.helper.db.industries import Industries
 from crawler.helper.db.markets import Markets
 from crawler.helper.db.sectors import Sectors
@@ -71,5 +70,7 @@ class Idx(object):
     return Markets.insertMarket(db, IDX, IDX_DESC)
 
 if __name__ == '__main__':
+  from crawler.collector import Collector
+
   Idx.storeStocks(Collector().db)
   Collector().stop()

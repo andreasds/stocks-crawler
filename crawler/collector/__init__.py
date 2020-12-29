@@ -1,4 +1,5 @@
 import crawler.helper.config as config
+import crawler.helper.idx as idx
 import mysql.connector as mysql
 
 from crawler.helper.singleton import Singleton
@@ -9,6 +10,10 @@ DB_NAME = 'stocks_crawler'
 INIT_SQL = 'db.sql'
 
 class Collector(metaclass=Singleton):
+
+  marketSource = {
+    idx.IDX: idx.Idx.storeStocks
+  }
 
   def __init__(self):
     # read config
@@ -67,6 +72,18 @@ class Collector(metaclass=Singleton):
     cursor.close()
     self.db.commit()
 
+  def addMarketDb(self, market):
+    print('Add', market, 'to database')
+
+    self.marketSource.get(
+        market,
+        lambda db: self.__undefinedMarket(market)
+    )(self.db)
+
+  def __undefinedMarket(self, market):
+    raise NotImplementedError(str(market) + ' market sources not defined')
+
 if __name__ == '__main__':
   Collector()
+  Collector().addMarketDb('DJIA')
   Collector().stop()
