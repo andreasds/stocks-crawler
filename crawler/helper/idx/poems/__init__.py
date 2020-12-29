@@ -4,7 +4,7 @@ import crawler.helper.config as config
 
 from bs4 import BeautifulSoup
 from crawler.helper.singleton import Singleton
-from crawler.poems.user import PoemsUser
+from crawler.helper.idx.poems.user import PoemsUser
 from http import HTTPStatus
 
 HOME_URL = 'https://www.poems.co.id'

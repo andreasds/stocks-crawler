@@ -1,9 +1,12 @@
 import requests
 
+from crawler.helper.db.histories import Histories
 from crawler.helper.db.industries import Industries
 from crawler.helper.db.markets import Markets
 from crawler.helper.db.sectors import Sectors
 from crawler.helper.db.stocks import Stocks
+from crawler.helper.idx.poems.chart import PoemsChart
+from crawler.helper.yahoo import Yahoo
 from http import HTTPStatus
 
 IDX = 'IDX'
@@ -20,16 +23,15 @@ class Idx(object):
     print('Collect IDX stocks')
 
     # get market id
-    marketId = cls().createMarket(db)
+    marketId = cls().__createMarket(db)
 
     # get emitens size
-    emitenSize = cls().getEmitenSize()
+    emitenSize = cls().__getEmitenSize()
 
     # get list emitens
-    emitens = cls().getListEmitens(emitenSize)
+    emitens = cls().__getListEmitens(emitenSize)
 
     # store emiten
-    print('Storing stocks data...')
     for emiten in emitens:
       sector = " ".join([ word.capitalize()  for word in emiten['Sektor'].split(' ') if word != '' ])
       Sectors.insertSector(db, sector)
@@ -39,7 +41,7 @@ class Idx(object):
 
       Stocks.insertStock(db, IDX, industry, emiten['KodeEmiten'], emiten['NamaEmiten'])
 
-  def getEmitenSize(self):
+  def __getEmitenSize(self):
     # request list emitens
     response = requests.get(
         url = IDX_URL + EMITEN_API
@@ -51,7 +53,7 @@ class Idx(object):
 
     return len(response.json())
 
-  def getListEmitens(self, size):
+  def __getListEmitens(self, size):
     # request list emitens
     response = requests.get(
         url = IDX_URL + COMPANY_PROFILE_API,
@@ -66,11 +68,28 @@ class Idx(object):
 
     return response.json()['data']
 
-  def createMarket(self, db):
+  def __createMarket(self, db):
     return Markets.insertMarket(db, IDX, IDX_DESC)
+
+  @classmethod
+  def updateStock(cls, db, stockId, stockCode, startDate):
+    histories = PoemsChart.history(stockCode, '1D', startDate)
+
+    for history in histories:
+      Histories.insertHistory(db, stockId, history['history_date'],
+          history['open'], history['high'], history['low'],
+          history['close'], history['volume'])
+
+    events = Yahoo.event(stockCode + '.JK', '1D', startDate)
 
 if __name__ == '__main__':
   from crawler.collector import Collector
 
+  stock = 'BBCA'
+  stockId = Stocks.getStockId(Collector().db, IDX, stock)
+  historyDate = '1990-01-01'
+
   Idx.storeStocks(Collector().db)
+  Idx.updateStock(Collector().db, stockId, stock, historyDate)
+
   Collector().stop()
