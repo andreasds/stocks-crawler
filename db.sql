@@ -40,3 +40,18 @@ CREATE TABLE IF NOT EXISTS stocks (
   CONSTRAINT fk_stocks_market FOREIGN KEY (market_id) REFERENCES markets(id),
   CONSTRAINT fk_stocks_industry FOREIGN KEY (industry_id) REFERENCES industries(id)
 );
+
+-- create histories
+CREATE TABLE IF NOT EXISTS histories (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  stock_id INT NOT NULL,
+  history_date DATE NOT NULL,
+  open DECIMAL(10,4) NOT NULL,
+  high DECIMAL(10,4) NOT NULL,
+  low DECIMAL(10,4) NOT NULL,
+  close DECIMAL(10,4) NOT NULL,
+  volume INT NOT NULL,
+  dividend DECIMAL(9,4) DEFAULT 0.0,
+  split DECIMAL(5,2) DEFAULT 0.0,
+  CONSTRAINT fk_histories_stock FOREIGN KEY(stock_id) REFERENCES stocks(id)
+);
