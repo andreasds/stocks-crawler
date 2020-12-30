@@ -1,0 +1,3 @@
+ARG MYSQL=8.0.22
+
+FROM mysql:${MYSQL}

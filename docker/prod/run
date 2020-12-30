@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd ~
+HOME=$PWD
+
+# make config file and output directory
+mkdir -p $HOME/.stocks
+touch $HOME/.stocks/.config
+mkdir -p $HOME/.stocks/output
+
+docker run \
+  -d \
+  -it \
+  -v $HOME/.stocks/.config:/home/stocks/crawler/.config \
+  -v $HOME/.stocks/output:/home/stocks/crawler/output \
+  --name stocks-crawler \
+  stocks-crawler:1.0

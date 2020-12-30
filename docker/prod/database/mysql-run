@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ "$#" -ge 1 ]
+then
+  docker run \
+    -d \
+    -it \
+    -e MYSQL_ROOT_PASSWORD=$1 \
+    -p 17306:3306 \
+    -p 18306:33060 \
+    --restart unless-stopped \
+    --name mysql \
+    mysql-prod:1.0
+else
+  echo "ERROR: no argument detected"
+  echo "./devel-run <mysql_password>"
+fi
