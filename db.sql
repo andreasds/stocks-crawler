@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS histories (
   high DECIMAL(10,4) NOT NULL,
   low DECIMAL(10,4) NOT NULL,
   close DECIMAL(10,4) NOT NULL,
-  volume INT NOT NULL,
+  volume BIGINT NOT NULL,
   dividend DECIMAL(9,4) DEFAULT 0.0,
   split DECIMAL(5,2) DEFAULT 0.0,
   CONSTRAINT fk_histories_stock FOREIGN KEY(stock_id) REFERENCES stocks(id)
