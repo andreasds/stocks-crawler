@@ -9,7 +9,10 @@ if __name__ == '__main__':
   if len(sys.argv[1:]):
     for market in sys.argv[1:]:
       # add market stocks database
-      collector.addMarketDb(market)
+      collector.addMarket(market)
+
+  # update market
+  collector.updateMarket()
 
   # close db
   collector.stop()

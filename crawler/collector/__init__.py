@@ -2,6 +2,7 @@ import crawler.helper.config as config
 import crawler.helper.idx as idx
 import mysql.connector as mysql
 
+from crawler.helper.db.histories import Histories
 from crawler.helper.singleton import Singleton
 
 DB_CONFIG = '.config'
@@ -11,8 +12,16 @@ INIT_SQL = 'db.sql'
 
 class Collector(metaclass=Singleton):
 
-  marketSource = {
+  stockSource = {
     idx.IDX: idx.Idx.storeStocks
+  }
+
+  historySource = {
+    idx.IDX: idx.Idx.storeHistory
+  }
+
+  eventSource = {
+    idx.IDX: idx.Idx.updateEvent
   }
 
   def __init__(self):
@@ -72,18 +81,34 @@ class Collector(metaclass=Singleton):
     cursor.close()
     self.db.commit()
 
-  def addMarketDb(self, market):
+  def addMarket(self, market):
     print('Add', market, 'to database')
 
-    self.marketSource.get(
+    self.stockSource.get(
         market,
-        lambda db: self.__undefinedMarket(market)
+        lambda db : self.__undefinedMarket(market)
     )(self.db)
 
   def __undefinedMarket(self, market):
     raise NotImplementedError(str(market) + ' market sources not defined')
 
+  def updateMarket(self):
+    histories = Histories.getLastStockHistory(self.db)
+    for stockId, market, stockCode, startDate in histories:
+      self.historySource.get(
+        market,
+        lambda db, id, code, date: self.__undefinedMarket(market)
+      )(self.db, stockId, stockCode, startDate)
+
+    events = Histories.getLastStockEvent(self.db)
+    for stockId, market, stockCode, startDate in events:
+      self.eventSource.get(
+        market,
+        lambda db, id, code, date: self.__undefinedMarket(market)
+      )(self.db, stockId, stockCode, startDate)
+
 if __name__ == '__main__':
   Collector()
-  Collector().addMarketDb('DJIA')
+  Collector().addMarket('IDX')
+  Collector().updateMarket()
   Collector().stop()

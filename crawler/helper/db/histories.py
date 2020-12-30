@@ -1,7 +1,8 @@
-import crawler.helper.idx as idx
+import crawler.helper.db as dbHelper
 import crawler.helper.db.industries as industries
 import crawler.helper.db.markets as markets
 import crawler.helper.db.stocks as stocks
+import crawler.helper.idx as idx
 import mysql.connector.errorcode as errorcode
 
 HISTORIES = 'histories'
@@ -80,22 +81,112 @@ class Histories(object):
     db.commit()
 
   @staticmethod
+  def updateHistory(db, stockId, historyDate, openPrice, highPrice, lowPrice,
+      closePrice, volume):
+    query = """
+        UPDATE %s
+        SET %s = %s, %s = %s, %s = %s, %s = %s, %s = %s
+        WHERE %s = %s AND %s = '%s'
+        """
+    data = ( HISTORIES,
+        HISTORY_OPEN, openPrice, HISTORY_HIGH, highPrice, HISTORY_LOW,
+          lowPrice, HISTORY_CLOSE, closePrice, HISTORY_VOLUME, volume,
+        HISTORY_STOCK, stockId, HISTORY_DATE, historyDate)
+
+    try:
+      cursor = db.cursor()
+      cursor.execute(query % data)
+    except Exception as err:
+      if err.errno != errorcode.ER_DUP_ENTRY:
+        print('ERR: Failed to update history = ' + str(err))
+        raise RuntimeError('Failed to update history = ' + str(err))
+
+    cursor.close()
+    db.commit()
+
+  @staticmethod
   def getLastStockHistory(db):
     query = """
         SELECT stock.%s, market.%s, stock.%s,
-          CASE WHEN history.%s is NULL then '1990-01-01'
+          CASE WHEN history.%s is NULL then '%s'
           ELSE DATE_ADD(history.%s, INTERVAL 1 DAY) END AS %s
         FROM %s AS stock
-          LEFT JOIN (SELECT %s, MAX(%s) as %s FROM %s GROUP BY %s) AS history
+          LEFT JOIN ( SELECT %s, MAX(%s) as %s FROM %s GROUP BY %s ) AS history
             ON stock.%s = history.%s
           LEFT JOIN %s AS market ON market.%s = stock.%s
         WHERE stock.%s
         """
     data = ( stocks.STOCK_ID, markets.MARKET_NAME, stocks.STOCK_CODE,
-        HISTORY_DATE,
+        HISTORY_DATE, dbHelper.DEFAULT_DATE,
         HISTORY_DATE, HISTORY_DATE,
         stocks.STOCKS,
         HISTORY_STOCK, HISTORY_DATE, HISTORY_DATE, HISTORIES, HISTORY_STOCK,
+        stocks.STOCK_ID, HISTORY_STOCK,
+        markets.MARKETS, markets.MARKET_ID, stocks.STOCK_MARKET,
+        stocks.STOCK_ACTIVE)
+
+    try:
+      cursor = db.cursor()
+      cursor.execute(query % data)
+    except Exception as err:
+      if err.errno != errorcode.ER_DUP_ENTRY:
+        print('ERR: Failed to insert history = ' + str(err))
+        raise RuntimeError('Failed to insert history = ' + str(err))
+
+    lastHistory = cursor.fetchall()
+    cursor.close()
+    db.commit()
+
+    return lastHistory
+
+  @staticmethod
+  def updateEvent(db, stockId, historyDate, dividend, split):
+    query = """
+        UPDATE %s AS history,
+          ( SELECT %s FROM %s
+            WHERE %s = %s AND %s = '%s'
+            ORDER BY %s DESC LIMIT 1 ) AS tmp
+        SET %s = %s, %s = %s
+        WHERE history.%s = tmp.%s
+        """
+    data = ( HISTORIES,
+        HISTORY_ID, HISTORIES,
+        HISTORY_STOCK, stockId, HISTORY_DATE, historyDate,
+        HISTORY_DATE,
+        HISTORY_DIVIDEND, dividend, HISTORY_SPLIT, split,
+        HISTORY_ID, HISTORY_ID )
+
+    try:
+      cursor = db.cursor()
+      cursor.execute(query % data)
+    except Exception as err:
+      if err.errno != errorcode.ER_DUP_ENTRY:
+        print('ERR: Failed to update history = ' + str(err))
+        raise RuntimeError('Failed to update history = ' + str(err))
+
+    cursor.close()
+    db.commit()
+
+  @staticmethod
+  def getLastStockEvent(db):
+    query = """
+        SELECT stock.%s, market.%s, stock.%s,
+          CASE WHEN history.%s is NULL then '%s'
+          ELSE DATE_ADD(history.%s, INTERVAL 1 DAY) END AS %s
+        FROM %s AS stock
+          LEFT JOIN
+            ( SELECT %s, MAX(%s) as %s FROM %s
+              WHERE %s != 0 OR %s != 0 GROUP BY %s ) AS history
+            ON stock.%s = history.%s
+          LEFT JOIN %s AS market ON market.%s = stock.%s
+        WHERE stock.%s
+        """
+    data = ( stocks.STOCK_ID, markets.MARKET_NAME, stocks.STOCK_CODE,
+        HISTORY_DATE, dbHelper.DEFAULT_DATE,
+        HISTORY_DATE, HISTORY_DATE,
+        stocks.STOCKS,
+        HISTORY_STOCK, HISTORY_DATE, HISTORY_DATE, HISTORIES,
+        HISTORY_DIVIDEND, HISTORY_SPLIT, HISTORY_STOCK,
         stocks.STOCK_ID, HISTORY_STOCK,
         markets.MARKETS, markets.MARKET_ID, stocks.STOCK_MARKET,
         stocks.STOCK_ACTIVE)
@@ -123,10 +214,20 @@ if __name__ == '__main__':
 
   Histories.insertHistory(Collector().db, stockId, historyDate, 10000.0, 12000.0, 7000.0,
       10500, 123456789)
+  Histories.updateHistory(Collector().db, stockId, historyDate, 5000.0, 6000.0, 3500.0,
+      5250, 987654321)
+  Histories.updateEvent(Collector().db, stockId, historyDate, 50.0, 0.0)
   print(stock, historyDate, 'id =',
       Histories.getHistoryId(Collector().db, idx.IDX, stock, historyDate))
 
+  print()
+  print('===== LAST HISTORY =====')
   for history in Histories.getLastStockHistory(Collector().db):
     print(history)
+
+  print()
+  print('===== LAST EVENT =====')
+  for event in Histories.getLastStockEvent(Collector().db):
+    print(event)
 
   Collector().stop()

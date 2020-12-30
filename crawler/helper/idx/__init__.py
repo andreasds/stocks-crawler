@@ -1,3 +1,4 @@
+import crawler.helper.db as dbHelper
 import requests
 
 from crawler.helper.db.histories import Histories
@@ -72,15 +73,38 @@ class Idx(object):
     return Markets.insertMarket(db, IDX, IDX_DESC)
 
   @classmethod
-  def updateStock(cls, db, stockId, stockCode, startDate):
+  def storeHistory(cls, db, stockId, stockCode, startDate):
     histories = PoemsChart.history(stockCode, '1D', startDate)
-
     for history in histories:
+      # store history to database
       Histories.insertHistory(db, stockId, history['history_date'],
           history['open'], history['high'], history['low'],
           history['close'], history['volume'])
 
+  def __updateHistory(self, db, stockId, stockCode, startDate):
+    print()
+    print('===== UPDATE HISTORY =====')
+    print()
+    histories = PoemsChart.history(stockCode, '1D', startDate)
+    for history in histories:
+      # update history to database
+      Histories.updateHistory(db, stockId, history['history_date'],
+          history['open'], history['high'], history['low'],
+          history['close'], history['volume'])
+
+  @classmethod
+  def updateEvent(cls, db, stockId, stockCode, startDate):
     events = Yahoo.event(stockCode + '.JK', '1D', startDate)
+    for event in events:
+      # store dividend and split to database
+      Histories.updateEvent(db, stockId, event['history_date'],
+          event['dividend'], event['split'])
+
+      if event['split'] == 0:
+        continue
+
+      # update previous history because stock split
+      cls().__updateHistory(db, stockId, stockCode, dbHelper.DEFAULT_DATE)
 
 if __name__ == '__main__':
   from crawler.collector import Collector
@@ -90,6 +114,7 @@ if __name__ == '__main__':
   historyDate = '1990-01-01'
 
   Idx.storeStocks(Collector().db)
-  Idx.updateStock(Collector().db, stockId, stock, historyDate)
+  Idx.storeHistory(Collector().db, stockId, stock, historyDate)
+  Idx.updateEvent(Collector().db, stockId, stock, historyDate)
 
   Collector().stop()
