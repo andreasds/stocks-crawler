@@ -28,6 +28,10 @@ class PoemsChart(object):
     )
     historyData = response.json()
 
+    if historyData['s'] != 'ok':
+      # no data
+      return []
+
     outputData = [
         {
             'history_date': datetime.fromtimestamp(t).strftime('%Y-%m-%d'),
